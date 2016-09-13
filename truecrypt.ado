@@ -114,30 +114,114 @@ pr truecrypt
 	}
 
 	* -progdir()-
+	// If progdir not set
 	if "`progdir'" == "" {
-		if c(os) == "Windows" ///
-			loc progdir C:\Program Files\TrueCrypt
-		else ///
-			loc progdir /Applications/TrueCrypt.app/Contents/MacOS
-	}
-	else if c(os) == "MacOSX" ///
-		loc progdir `progdir'/TrueCrypt.app/Contents/MacOS
-	conf f "`progdir'/TrueCrypt`=cond(c(os) == "Windows", ".exe", "")'"
+
+		// If running on Windows
+		if c(os) == "Windows" {
+
+			// Check for TrueCrypt
+			capture confirm file C:\Program Files\TrueCrypt\TrueCrypt.exe
+
+			// TrueCrypt found
+			if _rc == 7 {
+
+				// Set progdir to TrueCrypt
+				loc progdir C:\Program Files\TrueCrypt
+
+				// Set cryptapp to TrueCrypt.exe
+				loc cryptapp TrueCrypt.exe
+
+			// TrueCrypt not found
+			} else {
+
+				// Check for VeraCrypt
+				capture confirm new file C:\Program Files\VeraCrypt\VeraCrypt.exe
+
+				// VeraCrypt found
+				if _rc == 7 {
+
+					// Set progdir to VeraCrypt
+					loc progdir C:\Program Files\VeraCrypt
+
+					// Set cryptapp to VeraCrypt.exe
+					loc cryptapp VeraCrypt.exe
+
+				} // End IF Bloc for VeraCrypt found
+
+			} // End ELSE Block for TrueCrypt not found
+
+		// If running on Mac OS X
+		} else if c(os) == "MacOSX" {
+
+			// Check for TrueCrypt
+			capture confirm file /Applications/TrueCrypt.app/Contents/MacOS/TrueCrypt
+
+			// TrueCrypt found
+			if _rc == 7 {
+
+				// Set progdir to TrueCrypt
+				loc progdir /Applications/TrueCrypt.app/Contents/MacOS
+
+				// Set cryptapp to TrueCrypt
+				loc cryptapp TrueCrypt
+
+			// TrueCrypt not found
+			} else {
+
+				// Check for VeraCrypt
+				capture confirm new file /Applications/VeraCrypt.app/Contents/MacOS/VeraCrypt
+
+				// VeraCrypt found
+				if _rc == 7 {
+
+					// Set progdir to VeraCrypt
+					loc progdir Applications/VeraCrypt.app/Contents/MacOS
+
+					// Set cryptapp to VeraCrypt
+					loc cryptapp VeraCrypt
+
+				} // End IF Bloc for VeraCrypt found
+			} // End ELSE Block for TrueCrypt not found
+
+		// Not running on Windows or Mac OS X
+		} else {
+
+			// Report erorr
+			di as err "Not running Windows or Mac OS X"
+
+			// Exit
+			ex 198
+
+		} // End IF Block for not running Windows or Mac OS X
+
+		// If TrueCrypt and VeraCrypt not found
+		if  "`progdir'" == ""{
+
+			// Report erorr
+			di as err "TrueCrypt or VeraCrypt not found"
+
+			// Exit
+			ex 198
+
+		} // End ELSE Block for TrueCrypt and VeraCrypt not found
+
+	} // End IF Block for progdir not set
 	***End***
 
 	if c(os) == "Windows" {
 		* -mount-
 		if "`mount'" != "" ///
-			sh "`progdir'\TrueCrypt.exe" /v "`volume'" `=cond("`drive'" != "", "/l `drive'", "")' /q
+			sh "`progdir'\`cryptapp'" /v "`volume'" `=cond("`drive'" != "", "/l `drive'", "")' /q
 		* -dismount-
 		else ///
-			sh "`progdir'\TrueCrypt.exe" /d `drive' /q
+			sh "`progdir'\`cryptapp'" /d `drive' /q
 	}
 	else {
 		if "`mount'" != "" ///
-			sh "`progdir'/TrueCrypt" "`volume'" `drive'
+			sh "`progdir'/`cryptapp'" "`volume'" `drive'
 		else ///
-			sh "`progdir'/TrueCrypt" -d `drive'
+			sh "`progdir'/`cryptapp'" -d `drive'
 	}
 end
 
